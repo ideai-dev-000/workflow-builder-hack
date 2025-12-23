@@ -648,7 +648,7 @@ function useWorkflowState() {
   const addNode = useSetAtom(addNodeAtom);
   const [canUndo] = useAtom(canUndoAtom);
   const [canRedo] = useAtom(canRedoAtom);
-  const { data: session } = useSession();
+  const { data: session, isPending: isSessionPending } = useSession();
   const setActiveTab = useSetAtom(propertiesPanelActiveTabAtom);
   const setSelectedNodeId = useSetAtom(selectedNodeAtom);
   const setSelectedExecutionId = useSetAtom(selectedExecutionIdAtom);
@@ -665,18 +665,38 @@ function useWorkflowState() {
     }>
   >([]);
 
-  // Load all workflows on mount
+  // Load all workflows only when user is authenticated
   useEffect(() => {
+    // Wait for session to be determined
+    if (isSessionPending) {
+      return; // Still loading, don't make API calls yet
+    }
+
+    // Check if user is logged in (not anonymous)
+    const isLoggedIn =
+      session?.user &&
+      session.user.name !== "Anonymous" &&
+      !session.user.email?.startsWith("temp-");
+
+    // Only make API call if user is logged in
+    // If not logged in, set empty array and return (rest state)
+    if (!isLoggedIn) {
+      setAllWorkflows([]);
+      return;
+    }
+
     const loadAllWorkflows = async () => {
       try {
         const workflows = await api.workflow.getAll();
         setAllWorkflows(workflows);
       } catch (error) {
-        console.error("Failed to load workflows:", error);
+        // Silently handle errors - user might not be authenticated
+        // Don't log as error to avoid console noise
+        setAllWorkflows([]);
       }
     };
     loadAllWorkflows();
-  }, []);
+  }, [session, isSessionPending]);
 
   return {
     nodes,
@@ -863,11 +883,25 @@ function useWorkflowActions(state: ReturnType<typeof useWorkflowState>) {
   };
 
   const loadWorkflows = async () => {
+    // Check if user is logged in (not anonymous) before making API call
+    const isLoggedIn =
+      session?.user &&
+      session.user.name !== "Anonymous" &&
+      !session.user.email?.startsWith("temp-");
+
+    // If not logged in, set empty array and return (rest state)
+    if (!isLoggedIn) {
+      state.setAllWorkflows([]);
+      return;
+    }
+
     try {
       const workflows = await api.workflow.getAll();
-      setAllWorkflows(workflows);
+      state.setAllWorkflows(workflows);
     } catch (error) {
-      console.error("Failed to load workflows:", error);
+      // Silently handle errors - user might not be authenticated
+      // Don't log as error to avoid console noise
+      state.setAllWorkflows([]);
     }
   };
 
@@ -1378,7 +1412,10 @@ function WorkflowMenuComponent({
     <div className="flex flex-col gap-1">
       <div className="flex h-9 max-w-[160px] items-center overflow-hidden rounded-md border bg-secondary text-secondary-foreground sm:max-w-none">
         <DropdownMenu onOpenChange={(open) => open && actions.loadWorkflows()}>
-          <DropdownMenuTrigger className="flex h-full cursor-pointer items-center gap-2 px-3 font-medium text-sm transition-all hover:bg-black/5 dark:hover:bg-white/5">
+          <DropdownMenuTrigger
+            className="flex h-full cursor-pointer items-center gap-2 px-3 font-medium text-sm transition-all hover:bg-black/5 dark:hover:bg-white/5"
+            suppressHydrationWarning
+          >
             <WorkflowIcon className="size-4 shrink-0" />
             <p className="truncate font-medium text-sm">
               {workflowId ? (
