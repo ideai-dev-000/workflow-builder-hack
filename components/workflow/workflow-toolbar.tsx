@@ -883,25 +883,11 @@ function useWorkflowActions(state: ReturnType<typeof useWorkflowState>) {
   };
 
   const loadWorkflows = async () => {
-    // Check if user is logged in (not anonymous) before making API call
-    const isLoggedIn =
-      session?.user &&
-      session.user.name !== "Anonymous" &&
-      !session.user.email?.startsWith("temp-");
-
-    // If not logged in, set empty array and return (rest state)
-    if (!isLoggedIn) {
-      state.setAllWorkflows([]);
-      return;
-    }
-
     try {
       const workflows = await api.workflow.getAll();
-      state.setAllWorkflows(workflows);
+      setAllWorkflows(workflows);
     } catch (error) {
-      // Silently handle errors - user might not be authenticated
-      // Don't log as error to avoid console noise
-      state.setAllWorkflows([]);
+      console.error("Failed to load workflows:", error);
     }
   };
 

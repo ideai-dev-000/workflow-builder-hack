@@ -20,8 +20,8 @@ import { AIPrompt } from "@/components/ai-elements/prompt";
 import { WorkflowToolbar } from "@/components/workflow/workflow-toolbar";
 import "@xyflow/react/dist/style.css";
 
+import { PlayCircle, Zap } from "lucide-react";
 import { nanoid } from "nanoid";
-import { getNodeTemplates, getNodeTypes } from "@/lib/modes";
 import {
   addNodeAtom,
   autosaveAtom,
@@ -40,14 +40,37 @@ import {
   selectedNodeAtom,
   showMinimapAtom,
   type WorkflowNode,
+  type WorkflowNodeType,
 } from "@/lib/workflow-store";
 import { Edge } from "../ai-elements/edge";
 import { Panel } from "../ai-elements/panel";
+import { ActionNode } from "./nodes/action-node";
+import { AddNode } from "./nodes/add-node";
+import { TriggerNode } from "./nodes/trigger-node";
 import {
   type ContextMenuState,
   useContextMenuHandlers,
   WorkflowContextMenu,
 } from "./workflow-context-menu";
+
+const nodeTemplates = [
+  {
+    type: "trigger" as WorkflowNodeType,
+    label: "",
+    description: "",
+    displayLabel: "Trigger",
+    icon: PlayCircle,
+    defaultConfig: { triggerType: "Manual" },
+  },
+  {
+    type: "action" as WorkflowNodeType,
+    label: "",
+    description: "",
+    displayLabel: "Action",
+    icon: Zap,
+    defaultConfig: {},
+  },
+];
 
 const edgeTypes = {
   animated: Edge.Animated,
@@ -196,11 +219,14 @@ export function WorkflowCanvas() {
     };
   }, [fitView]);
 
-  // Get node types from mode system (workflow or architecture)
-  const nodeTypes = useMemo(() => getNodeTypes(), []);
-
-  // Get node templates from mode system
-  const nodeTemplates = useMemo(() => getNodeTemplates(), []);
+  const nodeTypes = useMemo(
+    () => ({
+      trigger: TriggerNode,
+      action: ActionNode,
+      add: AddNode,
+    }),
+    []
+  );
 
   const nodeHasHandle = useCallback(
     (nodeId: string, handleType: "source" | "target") => {
@@ -342,10 +368,8 @@ export function WorkflowCanvas() {
         clientY
       );
 
-      // Get the action template (or first available template for architecture mode)
-      const actionTemplate =
-        nodeTemplates.find((t: { type: string }) => t.type === "action") ||
-        nodeTemplates[0];
+      // Get the action template
+      const actionTemplate = nodeTemplates.find((t) => t.type === "action");
       if (!actionTemplate) {
         return;
       }
