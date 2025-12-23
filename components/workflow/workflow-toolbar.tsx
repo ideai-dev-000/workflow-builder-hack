@@ -648,7 +648,7 @@ function useWorkflowState() {
   const addNode = useSetAtom(addNodeAtom);
   const [canUndo] = useAtom(canUndoAtom);
   const [canRedo] = useAtom(canRedoAtom);
-  const { data: session } = useSession();
+  const { data: session, isPending: isSessionPending } = useSession();
   const setActiveTab = useSetAtom(propertiesPanelActiveTabAtom);
   const setSelectedNodeId = useSetAtom(selectedNodeAtom);
   const setSelectedExecutionId = useSetAtom(selectedExecutionIdAtom);
@@ -665,18 +665,38 @@ function useWorkflowState() {
     }>
   >([]);
 
-  // Load all workflows on mount
+  // Load all workflows only when user is authenticated
   useEffect(() => {
+    // Wait for session to be determined
+    if (isSessionPending) {
+      return; // Still loading, don't make API calls yet
+    }
+
+    // Check if user is logged in (not anonymous)
+    const isLoggedIn =
+      session?.user &&
+      session.user.name !== "Anonymous" &&
+      !session.user.email?.startsWith("temp-");
+
+    // Only make API call if user is logged in
+    // If not logged in, set empty array and return (rest state)
+    if (!isLoggedIn) {
+      setAllWorkflows([]);
+      return;
+    }
+
     const loadAllWorkflows = async () => {
       try {
         const workflows = await api.workflow.getAll();
         setAllWorkflows(workflows);
       } catch (error) {
-        console.error("Failed to load workflows:", error);
+        // Silently handle errors - user might not be authenticated
+        // Don't log as error to avoid console noise
+        setAllWorkflows([]);
       }
     };
     loadAllWorkflows();
-  }, []);
+  }, [session, isSessionPending]);
 
   return {
     nodes,
