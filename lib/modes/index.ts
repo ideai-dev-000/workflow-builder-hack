@@ -43,3 +43,6 @@ export function getNodeTemplates() {
 export type { AppMode } from "./config";
 // Re-export mode utilities
 export { getAppMode, isMode } from "./config";
+export type { ModeConfig } from "./mode-config";
+// Re-export mode configuration
+export { getModeConfig, modeConfigs } from "./mode-config";
