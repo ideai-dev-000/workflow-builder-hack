@@ -5,7 +5,7 @@ import { nanoid } from "nanoid";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef } from "react";
 import { toast } from "sonner";
-import { ApiError, api } from "@/lib/api-client";
+import { api } from "@/lib/api-client";
 import { authClient, useSession } from "@/lib/auth-client";
 import {
   currentWorkflowNameAtom,
@@ -57,30 +57,11 @@ const Home = () => {
     document.title = `${currentWorkflowName} - AI Workflow Builder`;
   }, [currentWorkflowName]);
 
-  // Helper to create anonymous session if needed and wait for it to be established
-  const ensureSession = useCallback(async (): Promise<boolean> => {
-    // If already have a session, return true
-    if (session?.user) {
-      return true;
-    }
-
-    try {
-      // Try to create anonymous session
+  // Helper to create anonymous session if needed
+  const ensureSession = useCallback(async () => {
+    if (!session) {
       await authClient.signIn.anonymous();
-
-      // Wait for session to be established (poll up to 2 seconds)
-      let attempts = 0;
-      const maxAttempts = 20;
-      while (attempts < maxAttempts) {
-        await new Promise((resolve) => setTimeout(resolve, 100));
-        // Check if session is now available (we can't directly check, so we'll just wait)
-        attempts++;
-      }
-
-      return true;
-    } catch (error) {
-      console.error("Failed to create anonymous session:", error);
-      return false;
+      await new Promise((resolve) => setTimeout(resolve, 100));
     }
   }, [session]);
 
@@ -124,12 +105,7 @@ const Home = () => {
       hasCreatedWorkflowRef.current = true;
 
       try {
-        // Ensure session is established before creating workflow
-        const sessionEstablished = await ensureSession();
-        if (!sessionEstablished) {
-          console.warn("Session not established, workflow creation may fail");
-          // Continue anyway - the API will return an error that we'll handle
-        }
+        await ensureSession();
 
         // Create workflow with all real nodes
         const newWorkflow = await api.workflow.create({
@@ -147,26 +123,8 @@ const Home = () => {
         console.log("[Homepage] Navigating to workflow page");
         router.replace(`/workflows/${newWorkflow.id}`);
       } catch (error) {
-        // Silently handle auth errors - user can sign in and try again
-        const isAuthError =
-          (error instanceof ApiError &&
-            (error.status === 401 || error.status === 403)) ||
-          (error instanceof Error &&
-            (error.message.includes("Unauthorized") ||
-              error.message.includes("Failed to get session") ||
-              error.message.includes("Authentication")));
-
-        if (isAuthError) {
-          // Don't show error toast for auth issues - user can sign in
-          console.warn("Authentication required to create workflow");
-          // Reset the flag so user can try again after signing in
-          hasCreatedWorkflowRef.current = false;
-        } else {
-          console.error("Failed to create workflow:", error);
-          toast.error("Failed to create workflow");
-          // Reset the flag so user can try again
-          hasCreatedWorkflowRef.current = false;
-        }
+        console.error("Failed to create workflow:", error);
+        toast.error("Failed to create workflow");
       }
     };
 

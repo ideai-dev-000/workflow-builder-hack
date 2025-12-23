@@ -161,15 +161,21 @@
   }
 }
 
-/* React Flow attribution styling - Hidden */
+/* React Flow attribution styling */
 .react-flow__attribution {
-  display: none !important;
+  background: transparent !important;
+  padding: 2px 4px !important;
+  font-size: 10px !important;
+  opacity: 0.4 !important;
 }
 
-/* Hide A11y descriptions */
-#react-flow__node-desc-1,
-[id^="react-flow__node-desc-"] {
-  display: none !important;
+.dark .react-flow__attribution {
+  background: transparent !important;
+  color: rgba(255, 255, 255, 0.4) !important;
+}
+
+.dark .react-flow__attribution a {
+  color: rgba(255, 255, 255, 0.5) !important;
 }
 
 /* React Flow pane cursor */

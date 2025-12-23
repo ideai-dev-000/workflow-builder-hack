@@ -32,7 +32,7 @@ export const modeConfigs: Record<AppMode, ModeConfig> = {
     addButtonLabel: "Add a Step",
     description: "Create workflows with triggers, actions, and integrations",
     branding: {
-      show: false,
+      show: true,
       text: "Powered by",
       links: [
         { label: "Workflow", url: "https://useworkflow.dev/" },
