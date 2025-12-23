@@ -537,6 +537,7 @@ export function WorkflowCanvas() {
         onPaneClick={onPaneClick}
         onPaneContextMenu={isGenerating ? undefined : onPaneContextMenu}
         onSelectionChange={isGenerating ? undefined : onSelectionChange}
+        proOptions={{ hideAttribution: true }}
       >
         <Panel
           className="workflow-controls-panel border-none bg-transparent p-0"
