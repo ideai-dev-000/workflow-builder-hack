@@ -57,6 +57,11 @@ BETTER_AUTH_SECRET=your-secret-key
 BETTER_AUTH_URL=http://localhost:3888
 NEXT_PUBLIC_APP_URL=http://localhost:3888
 
+# App Mode (optional - defaults to "workflow")
+# Set to "architecture" to enable architecture diagram mode
+# APP_MODE=workflow  # or "architecture"
+# NEXT_PUBLIC_APP_MODE=workflow  # for client-side access
+
 # Integration Encryption (required for saving API credentials)
 # Generate with: openssl rand -hex 32
 INTEGRATION_ENCRYPTION_KEY=your-64-character-hex-key-here
