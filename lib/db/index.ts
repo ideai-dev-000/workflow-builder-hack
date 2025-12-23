@@ -28,8 +28,30 @@ const schema = {
   integrations,
 };
 
-const connectionString =
-  process.env.DATABASE_URL || "postgres://localhost:5432/workflow";
+// Support multiple database URLs with easy toggling
+// Priority: DATABASE_URL > DATABASE_LOCAL_URL/DATABASE_CLOUD_URL (based on USE_CLOUD_DB)
+function getDatabaseUrl(): string {
+  // If DATABASE_URL is explicitly set, use it (highest priority)
+  if (process.env.DATABASE_URL) {
+    return process.env.DATABASE_URL;
+  }
+
+  // Check if we should use cloud database
+  const useCloudDb = process.env.USE_CLOUD_DB === "true";
+
+  if (useCloudDb && process.env.DATABASE_CLOUD_URL) {
+    return process.env.DATABASE_CLOUD_URL;
+  }
+
+  if (process.env.DATABASE_LOCAL_URL) {
+    return process.env.DATABASE_LOCAL_URL;
+  }
+
+  // Fallback to default local database
+  return "postgres://localhost:5432/workflow";
+}
+
+const connectionString = getDatabaseUrl();
 
 // For migrations
 export const migrationClient = postgres(connectionString, { max: 1 });

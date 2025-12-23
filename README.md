@@ -30,10 +30,12 @@ You can deploy your own version of the workflow builder to Vercel with one click
 
 ## Getting Started
 
+> **📖 For detailed local development setup, see [SETUP.md](./SETUP.md)**
+
 ### Prerequisites
 
 - Node.js 18+
-- PostgreSQL database
+- PostgreSQL database (local or cloud)
 - pnpm package manager
 
 ### Environment Variables
@@ -41,16 +43,74 @@ You can deploy your own version of the workflow builder to Vercel with one click
 Create a `.env.local` file with the following:
 
 ```env
-# Database
-DATABASE_URL=postgresql://user:password@localhost:5432/workflow_builder
+# Database Configuration
+# Option 1: Use DATABASE_URL for explicit control (highest priority)
+# DATABASE_URL=postgresql://postgres:postgres@localhost:5432/workflow_builder
+
+# Option 2: Use separate URLs and toggle with USE_CLOUD_DB (recommended)
+DATABASE_LOCAL_URL=postgresql://postgres:postgres@localhost:5432/workflow_builder
+DATABASE_CLOUD_URL=postgresql://user:password@your-cloud-db.com:5432/workflow_builder
+USE_CLOUD_DB=false  # Set to "true" to use cloud database
 
 # Better Auth
 BETTER_AUTH_SECRET=your-secret-key
-BETTER_AUTH_URL=http://localhost:3000
+BETTER_AUTH_URL=http://localhost:3888
+NEXT_PUBLIC_APP_URL=http://localhost:3888
 
-# AI Gateway (for AI workflow generation)
-AI_GATEWAY_API_KEY=your-openai-api-key
+# Integration Encryption (required for saving API credentials)
+# Generate with: openssl rand -hex 32
+INTEGRATION_ENCRYPTION_KEY=your-64-character-hex-key-here
+
+# AI Provider Configuration (for AI workflow generation)
+# Default: Uses AI_GATEWAY_API_KEY or OPENAI_API_KEY if AI_PROVIDER is not set
+
+# Option 1: AI Gateway (default - supports multiple providers) - ACTIVE
+AI_GATEWAY_API_KEY=vck_2DHExl3db0AK9GFV6atCkabj9mVRVnrRvqy9SbIiKyXz22aSbR0kct8k
+AI_MODEL=openai/gpt-5.1-instant  # Optional: override default model
+
+# Option 2: OpenAI (direct) - COMMENTED OUT
+# AI_PROVIDER=openai
+# OPENAI_API_KEY=your-openai-api-key
+# AI_MODEL=gpt-4o  # Optional: gpt-4o, gpt-4o-mini, gpt-4-turbo, etc.
+
+# Option 3: Anthropic (Claude) - COMMENTED OUT
+# AI_PROVIDER=anthropic
+# ANTHROPIC_API_KEY=your-anthropic-api-key
+# AI_MODEL=claude-3-5-sonnet-20241022  # Optional: claude-3-5-haiku, claude-3-opus, etc.
+
+# Option 4: Google (Gemini) - COMMENTED OUT
+# AI_PROVIDER=google
+# GOOGLE_AI_API_KEY=your-google-api-key
+# # OR
+# GEMINI_API_KEY=your-gemini-api-key
+# AI_MODEL=gemini-2.0-flash-exp  # Optional: gemini-1.5-pro, gemini-1.5-flash, etc.
+
+# Option 5: Ollama (local models) - COMMENTED OUT
+# AI_PROVIDER=ollama
+# OLLAMA_BASE_URL=http://localhost:11434  # Optional: defaults to localhost:11434
+# AI_MODEL=llama3.3:70b  # Optional: deepseek-r1:32b, qwen2.5-coder:32b, gemma3:27b, etc.
+
+# Option 6: OpenRouter (access to multiple models) - COMMENTED OUT
+# AI_PROVIDER=openrouter
+# OPENROUTER_API_KEY=your-openrouter-api-key
+# AI_MODEL=meta-llama/llama-3.3-70b-instruct  # Optional: any OpenRouter model
+# OPENROUTER_HTTP_REFERER=https://your-domain.com  # Optional: for analytics
+# OPENROUTER_X_TITLE=Workflow Builder  # Optional: app name for analytics
 ```
+
+#### Available Models by Provider
+
+**AI Gateway** (default): `openai/gpt-5.1-instant`, `openai/gpt-5.2`, `openai/gpt-5.2-pro`, `anthropic/claude-sonnet-4.5`, `meta/llama-4-scout`, `google/gemini-2.5-pro`, etc.
+
+**OpenAI**: `gpt-4o`, `gpt-4o-mini`, `gpt-4-turbo`, `gpt-4`, `gpt-3.5-turbo`, `o1-preview`, `o1-mini`
+
+**Anthropic**: `claude-3-5-sonnet-20241022`, `claude-3-5-haiku-20241022`, `claude-3-opus-20240229`, `claude-3-sonnet-20240229`
+
+**Google**: `gemini-2.0-flash-exp`, `gemini-1.5-pro`, `gemini-1.5-flash`, `gemini-pro`
+
+**Ollama** (local): `llama3.3:70b`, `deepseek-r1:32b`, `qwen2.5-coder:32b`, `gemma3:27b`, `devstral:24b`, `deepseek-coder-v2:16b`, `qwen3:14b`, `gemma2:9b`, `llama3.1:8b`, `dolphin-llama3:8b`, `qwen2.5-coder:7b`
+
+**OpenRouter**: `meta-llama/llama-3.3-70b-instruct`, `deepseek/deepseek-r1:32b`, `qwen/qwen-2.5-coder-32b-instruct`, and many more
 
 ### Installation
 
@@ -65,7 +125,7 @@ pnpm db:push
 pnpm dev
 ```
 
-Visit [http://localhost:3000](http://localhost:3000) to get started.
+Visit [http://localhost:3888](http://localhost:3888) to get started.
 
 ## Workflow Types
 
