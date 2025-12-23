@@ -1,6 +1,5 @@
 import { streamText } from "ai";
 import { NextResponse } from "next/server";
-import { getAIModel, getAIProviderConfig } from "@/lib/ai-provider/config";
 import { auth } from "@/lib/auth";
 import { generateAIActionPrompts } from "@/plugins";
 
@@ -267,31 +266,12 @@ export async function POST(request: Request) {
       );
     }
 
-    // Get AI provider configuration from environment variables
-    let aiConfig;
-    try {
-      aiConfig = getAIProviderConfig();
-    } catch (error) {
-      return NextResponse.json(
-        {
-          error:
-            error instanceof Error
-              ? error.message
-              : "AI provider configuration error. Please check your environment variables.",
-        },
-        { status: 500 }
-      );
-    }
+    const apiKey = process.env.AI_GATEWAY_API_KEY || process.env.OPENAI_API_KEY;
 
-    // Validate API key for providers that require it
-    if (
-      aiConfig.provider !== "ollama" &&
-      !aiConfig.apiKey &&
-      aiConfig.provider !== "ai-gateway"
-    ) {
+    if (!apiKey) {
       return NextResponse.json(
         {
-          error: `API key not configured for ${aiConfig.provider} provider. Please set the required environment variable.`,
+          error: "AI API key not configured on server. Please contact support.",
         },
         { status: 500 }
       );
@@ -344,24 +324,8 @@ Example: If user says "connect node A to node B", output:
 {"op": "addEdge", "edge": {"id": "e-new", "source": "A", "target": "B", "type": "default"}}`;
     }
 
-    // Get the AI model instance based on provider configuration
-    let model;
-    try {
-      model = getAIModel(aiConfig);
-    } catch (error) {
-      return NextResponse.json(
-        {
-          error:
-            error instanceof Error
-              ? error.message
-              : "Failed to initialize AI model. Please check your configuration.",
-        },
-        { status: 500 }
-      );
-    }
-
     const result = streamText({
-      model: model as any, // AI SDK v5 supports both v2 and v3 models
+      model: "openai/gpt-5.1-instant",
       system: getSystemPrompt(),
       prompt: userPrompt,
     });

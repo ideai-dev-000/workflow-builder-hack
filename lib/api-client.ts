@@ -42,7 +42,6 @@ export class ApiError extends Error {
 async function apiCall<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const response = await fetch(endpoint, {
     ...options,
-    credentials: "include", // Include cookies for Better Auth session
     headers: {
       "Content-Type": "application/json",
       ...options?.headers,
@@ -272,7 +271,6 @@ export const aiApi = {
   ): Promise<WorkflowData> => {
     const response = await fetch("/api/ai/generate", {
       method: "POST",
-      credentials: "include", // Include cookies for Better Auth session
       headers: {
         "Content-Type": "application/json",
       },
